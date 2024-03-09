@@ -1,0 +1,87 @@
+// Inicializace herního enginu Phaser
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var game = new Phaser.Game(config);
+var player;
+var cursors;
+var obstacles;
+var score = 0;
+var scoreText;
+
+function preload() {
+    // Načtení grafiky pro hráče, překážky a pozadí
+    this.load.image('dog', 'assets/dog.png');
+    this.load.image('obstacle', 'assets/obstacle.png');
+}
+
+function create() {
+    // Vytvoření hráče
+    player = this.physics.add.sprite(100, 450, 'dog');
+    player.setBounce(0.2);
+    player.setCollideWorldBounds(true);
+
+    // Vytvoření skupiny překážek
+    obstacles = this.physics.add.group();
+
+    // Vytvoření textu pro skóre
+    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+    // Nastavení kurzorů pro ovládání hráče
+    cursors = this.input.keyboard.createCursorKeys();
+
+    // Vytvoření smyčky pro generování překážek
+    this.time.addEvent({
+        delay: 1500,
+        callback: addObstacle,
+        callbackScope: this,
+        loop: true
+    });
+
+    // Kolizní detekce mezi hráčem a překážkami
+    this.physics.add.collider(player, obstacles, hitObstacle, null, this);
+}
+
+function update() {
+    // Ovládání hráče
+    if (cursors.left.isDown) {
+        player.setVelocityX(-160);
+    } else if (cursors.right.isDown) {
+        player.setVelocityX(160);
+    } else {
+        player.setVelocityX(0);
+    }
+
+    if (cursors.up.isDown && player.body.touching.down) {
+        player.setVelocityY(-330);
+    }
+}
+
+function addObstacle() {
+    // Generování překážky
+    var obstacle = obstacles.create(800, Phaser.Math.Between(350, 550), 'obstacle');
+    obstacle.setVelocityX(-200);
+    obstacle.setImmovable(true);
+}
+
+function hitObstacle() {
+    // Akce při kolizi s překážkou
+    this.physics.pause();
+    player.setTint(0xff0000);
+    gameOver = true;
+}
